@@ -5,8 +5,11 @@ import cors from "cors";
 import compression from "compression";
 import morgan from "morgan";
 import * as Sentry from "@sentry/node";
+import { ProfilingIntegration } from "@sentry/profiling-node";
 
 const app = express();
+
+dotenv.config();
 
 const sentryDSN = process.env.SENTRY_DSN;
 
@@ -16,11 +19,26 @@ Sentry.init({
     includeLocalVariables: true,
     integrations: [
         new Sentry.Integrations.Http({ tracing: true }),
-        new Sentry.Integrations.Express({ app })
+        new Sentry.Integrations.Express({ app }),
+        new ProfilingIntegration()
     ],
+    tracesSampleRate: 1.0,
+    profilesSampleRate: 1.0,
 });
 
 app.use(Sentry.Handlers.requestHandler());
+
+app.use(
+    Sentry.Handlers.errorHandler({
+        shouldHandleError(error) {
+            // Capture all 404 and 500 errors
+            if (+error.status > 399) {
+                return true;
+            }
+            return false;
+        },
+    })
+);
 
 app.use(Sentry.Handlers.tracingHandler());
 
@@ -46,8 +64,6 @@ app.use(bodyParser.urlencoded({
     extended: true
 }));
 
-dotenv.config();
-
 const port = process.env.PORT || 8080;
 
 export const callback = (req, res) => {
@@ -56,14 +72,16 @@ export const callback = (req, res) => {
         res.status(200).json({ msg: "Pong" });
     } catch (error) {
         Sentry.captureException(error);
-        res.status(400).json(error)
+        res.status(400).json({ error: error.message})
     }
 };
 
 app.post('/', callback);
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+    const msg = `Server is running on port ${port}`;
+    console.log(msg);
+    Sentry.captureMessage(msg);
 });
 
 export default app;
