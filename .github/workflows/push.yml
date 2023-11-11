@@ -35,7 +35,7 @@ jobs:
           context: .
           file: ./DockerFile
           push: true
-          tags: ${{github.repository}}:${{github.sha}}
+          tags: ${{github.repository | lower}}:${{github.sha | lower}}
           labels: ${{steps.meta.outputs.labels}}
           build-args: |
             PORT=${{env.PORT}}
