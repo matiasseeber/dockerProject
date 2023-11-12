@@ -35,7 +35,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: devopsproject:${{github.sha}}
+          tags: mseeber/devopsproject:${{github.sha}}
           labels: ${{steps.meta.outputs.labels}}
           build-args: |
             PORT=${{env.PORT}}
