@@ -69,6 +69,7 @@ const port = process.env.PORT || 8080;
 export const callback = (req, res) => {
     try {
         if (!req.body.msg || req.body.msg != "Ping") throw new Error('Request Body should be "Ping"');
+        console.log("hello world")
         res.status(200).json({ msg: "Pong" });
     } catch (error) {
         Sentry.captureException(error);
